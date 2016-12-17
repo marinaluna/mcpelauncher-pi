@@ -9,7 +9,7 @@
 #include <codecvt>
 #include <locale>
 #include <dirent.h>
-#include <subhook.h>
+//#include <subhook.h>
 #include "gles_symbols.h"
 #include "android_symbols.h"
 #include "egl_symbols.h"
@@ -244,15 +244,6 @@ static void minecraft_keyboard_special(int key, int action) {
     }
 }
 
-void patchCallInstruction(void* patchOff, void* func, bool jump) {
-    unsigned char* data = (unsigned char*) patchOff;
-    printf("original: %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4]);
-    data[0] = (unsigned char) (jump ? 0xe9 : 0xe8);
-    int ptr = ((int) func) - (int) patchOff - 5;
-    memcpy(&data[1], &ptr, sizeof(int));
-    printf("post patch: %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4]);
-}
-
 void unhookFunction(void* hook) {
     SubHook* shook = (SubHook*) hook;
     shook->Remove();
@@ -285,15 +276,15 @@ void* loadMod(std::string path) {
 }
 
 std::string getOSLibraryPath(std::string libName) {
-    std::string p = std::string("/usr/lib/i386-linux-gnu/") + libName;
+    std::string p = std::string("/usr/lib/arm-linux-gnueabihf/") + libName;
     if (access(p.c_str(), F_OK) != -1) {
         return p;
     }
-    p = std::string("/usr/lib32/") + libName;
+    p = std::string("/usr/lib/") + libName;
     if (access(p.c_str(), F_OK) != -1) {
         return p;
     }
-    p = std::string("/lib32/") + libName;
+    p = std::string("/lib/") + libName;
     if (access(p.c_str(), F_OK) != -1) {
         return p;
     }
@@ -377,6 +368,8 @@ void pshufb_xmm4_xmm0();
 
 using namespace std;
 int main(int argc, char *argv[]) {
+    std::cout << "MCPELauncher-Pi: Run Minecraft PE on Raspberry Pi"
+
     bool enableStackTracePrinting = true;
     bool workaroundAMD = false;
 
@@ -396,9 +389,9 @@ int main(int argc, char *argv[]) {
             enableStackTracePrinting = false;
         } else if (strcmp(argv[i], "--pocket-guis") == 0) {
             enablePocketGuis = true;
-        } else if (strcmp(argv[i], "--amd-fix") == 0) {
-            std::cout << "--amd-fix: Enabling AMD Workaround.\n";
-            workaroundAMD = true;
+        //} else if (strcmp(argv[i], "--amd-fix") == 0) {
+        //    std::cout << "--amd-fix: Enabling AMD Workaround.\n";
+        //    workaroundAMD = true;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             std::cout << "Help\n";
             std::cout << "--help               Shows this help information\n";
@@ -407,7 +400,7 @@ int main(int argc, char *argv[]) {
             std::cout << "--height <height>    Sets the window height\n";
             std::cout << "--pocket-guis        Switches to Pocket Edition GUIs\n";
             std::cout << "--no-stacktrace      Disables stack trace printing\n";
-            std::cout << "--amd-workaround     Fixes crashes on pre-i686 and AMD CPUs\n\n";
+            //std::cout << "--amd-workaround     Fixes crashes on pre-i686 and AMD CPUs\n\n";
             std::cout << "EGL Options\n";
             std::cout << "-display <display>  Sets the display\n";
             std::cout << "-info               Shows info about the display\n\n";
@@ -436,8 +429,8 @@ int main(int argc, char *argv[]) {
     stubSymbols(android_symbols, (void*) androidStub);
     stubSymbols(egl_symbols, (void*) eglStub);
     hybris_hook("eglGetProcAddress", (void*) eglGetProcAddress);
-    hybris_hook("mcpelauncher_hook", (void*) hookFunction);
-    hybris_hook("mcpelauncher_unhook", (void*) unhookFunction);
+    //hybris_hook("mcpelauncher_hook", (void*) hookFunction);
+    //hybris_hook("mcpelauncher_unhook", (void*) unhookFunction);
     hybris_hook("__android_log_print", (void*) __android_log_print);
     hybris_hook("__android_log_vprint", (void*) __android_log_vprint);
     hybris_hook("__android_log_write", (void*) __android_log_write);
@@ -446,8 +439,8 @@ int main(int argc, char *argv[]) {
     // load stub libraries
     if (!loadLibrary("libandroid.so") || !loadLibrary("liblog.so") || !loadLibrary("libEGL.so") || !loadLibrary("libGLESv2.so") || !loadLibrary("libOpenSLES.so") || !loadLibrary("libfmod.so") || !loadLibrary("libGLESv1_CM.so"))
         return -1;
-    if (!loadLibrary("libmcpelauncher_mod.so"))
-        return -1;
+    //if (!loadLibrary("libmcpelauncher_mod.so"))
+    //    return -1;
     void* handle = hybris_dlopen((getCWD() + "libs/libminecraftpe.so").c_str(), RTLD_LAZY);
     if (handle == nullptr) {
         std::cout << "failed to load MCPE: " << hybris_dlerror() << "\n";
@@ -457,7 +450,7 @@ int main(int argc, char *argv[]) {
     unsigned int libBase = ((soinfo*) handle)->base;
     std::cout << "loaded MCPE (at " << libBase << ")\n";
 
-    DIR *dir;
+    /*DIR *dir;
     struct dirent *ent;
     std::vector<void*> mods;
     if ((dir = opendir ("mods/")) != NULL) {
@@ -476,7 +469,7 @@ int main(int argc, char *argv[]) {
         }
         closedir(dir);
         std::cout << "loaded " << mods.size() << " mods\n";
-    }
+    */}
 
     std::cout << "apply patches\n";
 
@@ -527,15 +520,6 @@ int main(int argc, char *argv[]) {
     linuxHttpRequestInternalVtable[0] = (void*) &LinuxHttpRequestInternal::destroy;
     linuxHttpRequestInternalVtable[1] = (void*) &LinuxHttpRequestInternal::destroy;
 
-    if (workaroundAMD) {/*
-        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") +
-                   (0x40AD97 - 0x40ACD0);
-        for (unsigned int i = 0; i < 0x40ADA0 - 0x40AD97; i++)
-            ((char *) (void *) patchOff)[i] = 0x90;*/
-        patchOff = (unsigned int) hybris_dlsym(handle, "_ZN21BlockTessallatorCache5resetER11BlockSourceRK8BlockPos") + (0x40AD9B - 0x40ACD0);
-        patchCallInstruction((void*) patchOff, (void*) &pshufb_xmm4_xmm0, false);
-    }
-
     std::cout << "patches applied!\n";
 
     // load symbols for gl
@@ -572,7 +556,7 @@ int main(int argc, char *argv[]) {
     eglutInitAPIMask(EGLUT_OPENGL_ES2_BIT);
     eglutInit(argc, argv);
 
-    winId = eglutCreateWindow("Minecraft");
+    winId = eglutCreateWindow("Minecraft: Pocket Edition");
 
     // init MinecraftClient
     App::App_init = (void (*)(App*, AppContext&)) hybris_dlsym(handle, "_ZN3App4initER10AppContext");
@@ -594,11 +578,11 @@ int main(int argc, char *argv[]) {
     client->init(ctx);
     std::cout << "initialized lib\n";
 
-    for (void* mod : mods) {
+    /*for (void* mod : mods) {
         void (*initFunc)(MinecraftClient*) = (void (*)(MinecraftClient*)) hybris_dlsym(mod, "mod_set_minecraft");
         if ((void*) initFunc != nullptr)
             initFunc(client);
-    }
+    }*/
 
     eglutIdleFunc(minecraft_idle);
     eglutReshapeFunc(minecraft_reshape);

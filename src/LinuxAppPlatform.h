@@ -99,8 +99,8 @@ public:
         return "com.mojang.minecraftpe";
     }
     std::string getDeviceId() {
-        printf("device id = linux\n");
-        return "linux";
+        printf("device id = rpi\n");
+        return "rpi";
     }
     std::string createUUID();
     bool isFirstSnoopLaunch() {

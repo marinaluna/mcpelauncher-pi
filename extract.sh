@@ -16,4 +16,4 @@ fi
 rm -rf assets/
 
 unzip ${1} "assets/*"
-unzip -p ${1} lib/x86/libminecraftpe.so > libs/libminecraftpe.so
+unzip -p ${1} lib/armeabi-v7a/libminecraftpe.so > libs/libminecraftpe.so
