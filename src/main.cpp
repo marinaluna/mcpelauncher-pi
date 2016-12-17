@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include <codecvt>
 #include <locale>
 #include <dirent.h>
 //#include <subhook.h>
@@ -244,17 +243,30 @@ static void minecraft_keyboard_special(int key, int action) {
     }
 }
 
+void patchCallInstruction(void* patchOff, void* func, bool jump) {
+    std::cout << "patchCallInstruction: not implemented for architecture armv7!\nHook will not take effect!";
+    /*unsigned char* data = (unsigned char*) patchOff;
+    printf("original: %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4]);
+    data[0] = (unsigned char) (jump ? 0xe9 : 0xe8);
+    int ptr = ((int) func) - (int) patchOff - 5;
+    memcpy(&data[1], &ptr, sizeof(int));
+    printf("post patch: %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4]);*/
+}
+
 void unhookFunction(void* hook) {
-    SubHook* shook = (SubHook*) hook;
+    std::cout << "unhookFunction: not implemented!";
+    /*SubHook* shook = (SubHook*) hook;
     shook->Remove();
-    delete shook;
+    delete shook;*/
 }
 
 void* hookFunction(void* symbol, void* hook, void** original) {
-    SubHook* ret = new SubHook();
+    std::cout << "hookFunction: not implemented!";
+    return nullptr;
+    /*SubHook* ret = new SubHook();
     ret->Install(symbol, hook);
     *original = ret->GetTrampoline();
-    return ret;
+    return ret;*/
 }
 
 void* loadMod(std::string path) {
@@ -368,7 +380,7 @@ void pshufb_xmm4_xmm0();
 
 using namespace std;
 int main(int argc, char *argv[]) {
-    std::cout << "MCPELauncher-Pi: Run Minecraft PE on Raspberry Pi"
+    std::cout << "MCPELauncher-Pi: Run Minecraft PE on Raspberry Pi";
 
     bool enableStackTracePrinting = true;
     bool workaroundAMD = false;
@@ -469,7 +481,7 @@ int main(int argc, char *argv[]) {
         }
         closedir(dir);
         std::cout << "loaded " << mods.size() << " mods\n";
-    */}
+    }*/
 
     std::cout << "apply patches\n";
 
