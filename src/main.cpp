@@ -380,7 +380,7 @@ void pshufb_xmm4_xmm0();
 
 using namespace std;
 int main(int argc, char *argv[]) {
-    std::cout << "MCPELauncher-Pi: Run Minecraft PE on Raspberry Pi";
+    std::cout << "MCPELauncher-Pi: Run Minecraft PE on Raspberry Pi\n";
 
     bool enableStackTracePrinting = true;
     bool workaroundAMD = false;
