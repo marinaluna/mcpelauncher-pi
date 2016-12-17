@@ -1,1 +1,7 @@
+.idea/
+assets/
+data/
+libs/libminecraftpe.so
+libs/libgnustl_shared.so
+*.apk
 .DS_Store
