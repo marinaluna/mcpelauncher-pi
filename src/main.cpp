@@ -28,38 +28,6 @@ extern "C" {
 #include "../hybris/include/hybris/hook.h"
 #include "../hybris/src/jb/linker.h"
 
-void ANativeWindow_setBuffersGeometry() { }
-void AAssetManager_open() { }
-void AAsset_getLength() { }
-void AAsset_getBuffer() { }
-void AAsset_close() { }
-void ALooper_pollAll() { }
-void ANativeActivity_finish() { }
-void AInputQueue_getEvent() { }
-void AKeyEvent_getKeyCode() { }
-void AInputQueue_preDispatchEvent() { }
-void AInputQueue_finishEvent() { }
-void AKeyEvent_getAction() { }
-void AMotionEvent_getAxisValue() { }
-void AKeyEvent_getRepeatCount() { }
-void AKeyEvent_getMetaState() { }
-void AInputEvent_getDeviceId() { }
-void AInputEvent_getType() { }
-void AInputEvent_getSource() { }
-void AMotionEvent_getAction() { }
-void AMotionEvent_getPointerId() { }
-void AMotionEvent_getX() { }
-void AMotionEvent_getY() { }
-void AMotionEvent_getPointerCount() { }
-void AConfiguration_new() { }
-void AConfiguration_fromAssetManager() { }
-void AConfiguration_getLanguage() { }
-void AConfiguration_getCountry() { }
-void ALooper_prepare() { }
-void ALooper_addFd() { }
-void AInputQueue_detachLooper() { }
-void AConfiguration_delete() { }
-void AInputQueue_attachLooper() { }
 
 void __android_log_vprint(int prio, const char *tag,  const char *fmt, va_list args) {
     std::cout << "[" << tag << "] ";
@@ -76,7 +44,7 @@ void __android_log_write(int prio, const char *tag,  const char *fmt, const char
     std::cout << "[" << tag << "] " << text << std::endl;
 }
 
-}
+} // extern "C"
 
 std::string getCWD() {
     char _cwd[MAXPATHLEN];
@@ -244,13 +212,16 @@ static void minecraft_keyboard_special(int key, int action) {
 }
 
 void patchCallInstruction(void* patchOff, void* func, bool jump) {
-    std::cout << "patchCallInstruction: not implemented for architecture armv7!\nHook will not take effect!";
-    /*unsigned char* data = (unsigned char*) patchOff;
-    printf("original: %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4]);
-    data[0] = (unsigned char) (jump ? 0xe9 : 0xe8);
-    int ptr = ((int) func) - (int) patchOff - 5;
-    memcpy(&data[1], &ptr, sizeof(int));
-    printf("post patch: %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4]);*/
+    uint32_t* data = (uint32_t*) patchOff;
+    bool thumb = ((uint32_t) data) & 1;
+    if(thumb)
+    {
+        data = (uint32_t*) (((uint32_t) data) - 1);
+    }
+    printf("original: %#08x %#08x\n", data[0], data[1]);
+    data[0] = (uint32_t) (thumb)? 0xF000F8DF : 0xE51FF008; // LDR PC, [PC] for Thumb; LDR PC, [PC, #-8] for ARM (adjusted for pipeline)
+    data[1] = (uint32_t) func;
+    printf("post patch: %#08x %#08x\n", data[0], data[1]);
 }
 
 void unhookFunction(void* hook) {
@@ -435,7 +406,7 @@ int main(int argc, char *argv[]) {
     std::cout << "loading MCPE\n";
 
     void* glesLib = loadLibraryOS(getOSLibraryPath("libGLESv2.so"), gles_symbols);
-    void* fmodLib = loadLibraryOS((getCWD() + "libs/native/libfmod.so.8.2").c_str(), fmod_symbols);
+    void* fmodLib = loadLibraryOS((getCWD() + "libs/native/libfmod.so.8.15").c_str(), fmod_symbols);
     if (glesLib == nullptr || fmodLib == nullptr)
         return -1;
     stubSymbols(android_symbols, (void*) androidStub);
